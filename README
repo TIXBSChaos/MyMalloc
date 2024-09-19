@@ -1,0 +1,62 @@
+Authors
+ Name			  NetID
+Karan Chaudhar		kmc542
+Shrey Patel		sp2195
+
+Error Handling
+
+mymalloc():
+We decided to handle errors by returning a NULL pointer instead of exiting the program.
+We felt this was the right decision for a multitude of reasons, such as:
+Returning NULL provides a clear indication that memory allocation has failed. 
+Returning NULL can help the programmer create an error message that is more useful to them for catching bugs.
+In some situations, especially in long-running applications, it's more desirable to continue running even if memory allocation fails.
+This can also make the programmer that made the application decide on what they should do in such a case.
+The types of errors we catch are:
+Trying to allocate 0 bytes of memory.
+Trying to allocate more memory than given.
+Trying to allocate memory, but there isn’t enough memory to allocate.
+
+myfree():
+We decided to handle eros by exiting the program instead of letting the program run.
+We felt this was the right decision as the program can start to have undefined behaviors that can hurt the programmer more than help them.
+The types of errors we catch are:
+If the given pointer is NULL.
+If the given pointer is outside the range of the memory.
+If the given pointer is free or has already been freed before.
+If the given pointer is in the memory, but not pointing to a payload.
+
+Testing Error Handling And Basic Function
+
+mymalloc():
+We decided to test mymalloc() with a single test, which just makes sure that when we allocate memory, we aren’t writing over previously allocated variables.
+The program allocates several large objects. Once allocation is complete, it fills each object with a distinct byte pattern (e.g., the first object is filled with 1, the second with 2, etc.). Finally, it checks whether each object still contains the written pattern.
+mallocTest.c
+make mallocTest
+We only did one test as the stress test (which we go over in more detail in the performance section) test for many of the functions of mymalloc().
+
+myfree():
+We decided to test myfree() with a multitude of tests, such as:
+Calling free on an object outside the heap.
+callingFreeOnOutsideObject.c
+make cfoo
+Calling free on an object inside the heap but not on a payload.
+callingFreeWithNotChunk.c
+make cfwnc
+Making sure myfree() deallocates the object.
+freeTest.c
+make freeTest
+Testing its ability to coalesce free chunks of memory together by allocating 5 integers, freeing integers 1, 2, and 3 (counting from 0), then allocating space for a struct that contains 2 integers in it. 
+To make sure that free can coalesce free chunks, we check the location of the struct in memory. If it is in the same location as integer 1, then it passed the test.
+coalesceTest.c
+make coalesceTest
+
+Performance
+
+memgrind():
+We have five separate stress tests to see if our project can handle larger amounts of calls to malloc() and free().
+Test 1: this is a simple test that uses the same allocated byte of memory and frees it 120 times in a row. The point of the test is to see if the library can handle manipulating a single address for an extended amount of requests.
+Test 2: this test measures the amount of memory our library can manage at one time before needing to free up space. We take 30 pointers to 30 bytes separate bytes of memory and store them next to each other. After storing them in a line, we are able to free them individually until the memory is once again free. From there, we continue the process 3 more times in order to reach 120 total pointers being allocated and freed.
+Test 3: this test measures the library’s ability to handle multiple operations by feeding it a random order of malloc() requests and free() requests. The end goal is to ensure that the system can handle random inputs, and does not follow a specific plan of action that it cannot deviate from.
+Test 4: this test measures the library’s ability to store not only at the current memory location, but the next block as well. This means that we are constantly overriding the previous iteration’s memory. In the end, we then free up every block, resulting in a clean memory line.
+Test 5: in this test we randomly assign sizes for our library to memory allocation. After this, we remove all the entries by using free(), despite the random sizes of each entry. 
